@@ -1,0 +1,22 @@
+# One-click deploy to Render (render.com): New -> Blueprint -> pick this repo.
+services:
+  - type: web
+    name: ai-evidence-lab
+    runtime: docker
+    plan: starter            # a persistent disk needs a paid instance
+    healthCheckPath: /healthz
+    disk:
+      name: evidence-data    # cases (originals, crops, reports) survive restarts and redeploys
+      mountPath: /data
+      sizeGB: 10
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false          # Render asks you for the value during setup
+      - key: AEL_PASSWORD
+        sync: false          # the password people use to sign in
+      - key: AEL_SECRET_KEY
+        generateValue: true
+      - key: AEL_PUBLIC
+        value: "1"           # refuse to run without a password
+      - key: AEL_MAX_UPLOAD_MB
+        value: "2048"

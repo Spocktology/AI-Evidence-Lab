@@ -7,6 +7,7 @@ const fileUrl = (caseId, rel) => `/api/cases/${caseId}/files/${rel}`;
 
 async function api(path, opts = {}) {
   const res = await fetch(path, opts);
+  if (res.status === 401) { location.href = "/login"; throw new Error("Not logged in"); }
   if (!res.ok) {
     let msg = res.statusText;
     try { msg = (await res.json()).detail || msg; } catch (_) { /* ignore */ }
@@ -40,6 +41,7 @@ async function checkHealth() {
     if (!h.exiftool) parts.push(`<span class="bad">exiftool not installed (reduced metadata)</span>`);
     if (!h.ffmpeg) parts.push(`<span class="bad">ffmpeg not installed (no video)</span>`);
     parts.push(`<span class="muted">${esc(h.model)} · effort ${esc(h.effort)}</span>`);
+    if (h.login_enabled) parts.push(`<a href="/logout">Log out</a>`);
     $("#health").innerHTML = parts.join(" · ");
     state.health = h;
   } catch (_) { $("#health").textContent = "Server not reachable"; }

@@ -11,17 +11,18 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import cases, config, pipeline, report
+from . import auth, cases, config, pipeline, report
 from .grid import Grid, parse_cell
 
 app = FastAPI(title="AI Evidence Lab", version=config.TOOL_VERSION)
 STATIC = config.ROOT / "static"
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
+app.middleware("http")(auth.middleware)
 
 _running: set[str] = set()
 _run_lock = threading.Lock()
@@ -46,6 +47,27 @@ def index() -> HTMLResponse:
     return HTMLResponse((STATIC / "index.html").read_text(encoding="utf-8"))
 
 
+@app.get("/healthz")
+def healthz() -> dict[str, bool]:
+    """Unauthenticated liveness check for the hosting platform."""
+    return {"ok": True}
+
+
+@app.get("/login", response_class=HTMLResponse)
+def login_form() -> HTMLResponse:
+    return auth.login_page()
+
+
+@app.post("/login")
+async def login(request: Request) -> Response:
+    return await auth.handle_login(request)
+
+
+@app.get("/logout")
+def logout() -> Response:
+    return auth.handle_logout()
+
+
 @app.get("/api/health")
 def health() -> dict[str, Any]:
     import os
@@ -53,7 +75,7 @@ def health() -> dict[str, Any]:
     return {"ok": True, "model": config.MODEL, "effort": config.EFFORT,
             "api_key_configured": bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")),
             "exiftool": bool(shutil.which("exiftool")), "ffmpeg": bool(shutil.which("ffmpeg")),
-            "version": config.TOOL_VERSION}
+            "version": config.TOOL_VERSION, "login_enabled": auth.enabled()}
 
 
 @app.get("/api/cases")

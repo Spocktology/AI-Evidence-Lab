@@ -90,6 +90,39 @@ docker build -t ai-evidence-lab .
 docker run -p 8000:8000 --env-file .env -v "$PWD/data:/data" ai-evidence-lab
 ```
 
+## Put it online as its own website
+
+The app needs a server: Python, ffmpeg, exiftool, your API key, and disk space for cases. GitHub Pages
+can't host it. Any host that runs a Docker container can. The repo includes a ready-made setup for
+**Render**:
+
+1. Sign up at render.com and connect your GitHub account.
+2. Click **New → Blueprint** and pick this repository. Render reads `render.yaml`.
+3. When asked, enter:
+   - `ANTHROPIC_API_KEY`: your API key.
+   - `AEL_PASSWORD`: the password people will use to sign in. Choose a strong one.
+4. Click **Apply**. The first build takes a few minutes. You get a link like
+   `https://ai-evidence-lab.onrender.com`, which you can later replace with your own domain under
+   *Settings → Custom Domains*.
+
+The setup uses Render's **Starter** instance with a **10 GB persistent disk**, so cases survive restarts and
+redeploys. Render bills these monthly; check render.com/pricing. The free tier has no persistent disk and
+would lose every case on restart.
+
+Each push to the deployed branch redeploys automatically. Videos are processed on the server, so long 4K
+clips need a larger instance (more RAM) than short phone clips. You can raise it in Render's settings.
+
+**Other hosts** (Railway, Fly.io, a VPS…) can use the `Dockerfile` directly. You must:
+- Set `AEL_PUBLIC=1`, `AEL_PASSWORD` and `ANTHROPIC_API_KEY`.
+- Mount persistent storage at `/data`.
+
+**Login.**
+- With `AEL_PUBLIC=1` the app **refuses to run without a password**, so it can never be left open to the
+  internet. Without a login, anyone with the link could upload files and spend your API credit.
+- Sessions last 14 days.
+- Wrong passwords are rate-limited.
+- Changing `AEL_PASSWORD` signs everyone out, unless you also set your own `AEL_SECRET_KEY`.
+
 ### Settings (`.env`)
 
 | Variable | Default | Meaning |
@@ -100,6 +133,9 @@ docker run -p 8000:8000 --env-file .env -v "$PWD/data:/data" ai-evidence-lab
 | `AEL_USE_FALLBACKS` | `1` | If the model declines a request, it is automatically re-run on a fallback model. |
 | `AEL_DATA_DIR` | `./data` | Where cases are stored. Contains original media: keep it private and back it up. |
 | `AEL_MAX_UPLOAD_MB` | `4096` | Upload size limit. |
+| `AEL_PASSWORD` | – | Turns on the sign-in page. Required when hosted. |
+| `AEL_PUBLIC` | `0` | `1` = hosted mode: refuse to run without `AEL_PASSWORD`, secure cookies. |
+| `AEL_SECRET_KEY` | derived | Signs session cookies. Render generates one automatically. |
 
 ### Cost
 
@@ -126,8 +162,9 @@ Claude call stubbed out, so no API key is used. They check four things:
 
 ## Security and privacy
 
-- The app has **no login**. Run it on your own machine (it binds to 127.0.0.1) or put it behind
-  authentication before exposing it on a network.
+- Run locally, the app has no login and listens only on your own machine (127.0.0.1).
+- Hosted, it requires a password (see "Put it online"). Treat that password like the API key: anyone who
+  has it can run analyses at your expense.
 - Media, metadata and your answers are sent to the Anthropic API for analysis. The app asks for consent
   before each run.
 - GPS coordinates can reveal where someone lives. Use **Redact location data** before sharing a report.
