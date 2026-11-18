@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ final.title or case.title }} - AI Evidence Lab Report</title>
+<style>
+  :root { --ink:#1b1f24; --muted:#5b6470; --line:#d9dee5; --bg:#f6f7f9; --card:#fff; --accent:#2457c5;
+          --good:#1f8a4c; --warn:#b7791f; --bad:#c53030; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color:var(--ink); background:var(--bg); }
+  .page { max-width: 1050px; margin: 0 auto; padding: 28px 20px 60px; }
+  header.top { border-bottom: 3px solid var(--ink); padding-bottom: 14px; margin-bottom: 22px; }
+  .brand { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  h1 { margin: 4px 0 6px; font-size: 26px; line-height:1.25; }
+  h2 { font-size: 19px; margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 15.5px; margin: 18px 0 6px; }
+  .meta-line { color: var(--muted); font-size: 13px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 12px 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 760px) { .grid2, .grid4 { grid-template-columns: 1fr; } }
+  .verdict { display:inline-block; font-weight:700; padding:5px 12px; border-radius:999px; background:#eef2fb; color:var(--accent); border:1px solid #c9d6f3; }
+  .big { font-size: 34px; font-weight: 800; line-height: 1; }
+  .range { color: var(--muted); font-size: 13px; }
+  .bar { position: relative; height: 10px; background: #e8ebf0; border-radius: 6px; margin: 8px 0 4px; overflow: hidden; }
+  .bar .rng { position:absolute; top:0; bottom:0; background: rgba(36,87,197,.25); }
+  .bar .pt { position:absolute; top:-2px; bottom:-2px; width:4px; margin-left:-2px; background: var(--accent); border-radius:2px; }
+  .likely .fill { position:absolute; top:0; bottom:0; left:0; background: var(--accent); }
+  table { width:100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align:left; vertical-align: top; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing:.04em; }
+  td.k { color: var(--muted); width: 34%; word-break: break-word; }
+  .tag { display:inline-block; font-size:11.5px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); background:#f2f4f7; }
+  .tag.warning, .tag.raises_concern { background:#fdecec; border-color:#f3c2c2; color: var(--bad); }
+  .tag.caution { background:#fdf5e6; border-color:#f0d9a8; color: var(--warn); }
+  .tag.supports_authenticity { background:#e8f6ee; border-color:#bfe3cd; color: var(--good); }
+  ul.tight { margin: 6px 0; padding-left: 20px; } ul.tight li { margin: 3px 0; }
+  .explanation { border-left: 4px solid var(--accent); }
+  .explanation .head { display:flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .explanation .pctv { font-size: 22px; font-weight: 800; color: var(--accent); white-space: nowrap; }
+  .pro { color: var(--good); } .con { color: var(--bad); }
+  figure { margin: 0; background: var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; break-inside: avoid; }
+  figure img { display:block; width:100%; height:auto; background:#000; }
+  figcaption { padding: 9px 12px; font-size: 12.5px; color: var(--muted); }
+  figcaption b { color: var(--ink); }
+  .gallery { display:grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  @media (max-width: 760px) { .gallery { grid-template-columns: 1fr; } }
+  .ann { font-size: 12.5px; margin-top: 4px; }
+  .note { font-size: 12.5px; color: var(--muted); }
+  .disclaimer { font-size: 12.5px; color: var(--muted); background:#fff; border:1px dashed var(--line); padding:12px 14px; border-radius:8px; }
+  pre { white-space: pre-wrap; word-break: break-word; font-size: 11.5px; background:#f2f4f7; padding:10px; border-radius:8px; max-height: 420px; overflow:auto; }
+  .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin: 0 0 18px; }
+  .toolbar a, .toolbar button { font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 8px; border:1px solid var(--line); background:#fff; color:var(--ink); text-decoration:none; cursor:pointer; }
+  details summary { cursor: pointer; color: var(--accent); font-size: 13.5px; }
+  @media print {
+    body { background:#fff; font-size: 12px; } .toolbar { display:none; } .page { padding: 0; max-width: none; }
+    .card, figure { border-color:#ccc; } h2 { break-after: avoid; } .explanation, .card { break-inside: avoid; }
+    details { display:block; } details > summary { display:none; } pre { max-height:none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  {% if not embed %}
+  <div class="toolbar">
+    <a href="/">&larr; Back to app</a>
+    <button onclick="window.print()">Print / Save as PDF</button>
+    <a href="/cases/{{ case.id }}/report/download{% if redact_location %}?redact_location=true{% endif %}">Download self-contained HTML</a>
+    {% if redact_location %}<a href="?">Show location data</a>{% else %}<a href="?redact_location=true">Redact location data</a>{% endif %}
+    <a href="/api/cases/{{ case.id }}/result" target="_blank">Raw JSON</a>
+  </div>
+  {% endif %}
+
+  <header class="top">
+    <div class="brand">AI Evidence Lab &middot; Media Analysis Report</div>
+    <h1>{{ final.title or case.title }}</h1>
+    <div class="meta-line">Case {{ case.id }} &middot; File: {{ case.filename }} &middot; Report generated {{ result.completed_at }}
+      &middot; Tool v{{ tool_version }} &middot; Model {{ result.model }} (effort: {{ result.effort }})</div>
+  </header>
+
+  <!-- ===== Summary ===== -->
+  <div class="grid2">
+    <div class="card">
+      <div class="brand">Verdict on authenticity</div>
+      <p style="margin:8px 0"><span class="verdict">{{ verdict_label }}</span></p>
+      <div class="brand" style="margin-top:14px">Most likely explanation</div>
+      {% set top = (final.explanations or [])[0] %}
+      {% if top %}<p style="margin:6px 0"><b>{{ top.explanation }}</b> &mdash; {{ top.likelihood_percent|pct }}</p>{% endif %}
+    </div>
+    <div class="card">
+      {% set oc = final.overall_confidence or {} %}
+      <div class="brand">Overall confidence in the primary conclusion</div>
+      <div style="display:flex; align-items:baseline; gap:10px; margin-top:8px">
+        <span class="big">{{ oc.percent|pct }}</span><span class="range">range {{ oc.low|pct }} &ndash; {{ oc.high|pct }}</span>
+      </div>
+      <div class="bar"><div class="rng" style="left:{{ oc.low or 0 }}%; width:{{ (oc.high or 0) - (oc.low or 0) }}%"></div><div class="pt" style="left:{{ oc.percent or 0 }}%"></div></div>
+      <p class="note" style="margin:6px 0 0"><b>Conclusion:</b> {{ oc.primary_conclusion }}</p>
+    </div>
+  </div>
+
+  <h2>Executive summary</h2>
+  <div class="card"><p style="margin:0">{{ final.executive_summary }}</p>
+    {% if oc.rationale %}<p class="note" style="margin:10px 0 0"><b>Why this confidence:</b> {{ oc.rationale }}</p>{% endif %}
+  </div>
+
+  <!-- ===== Authenticity ===== -->
+  <h2>Authenticity assessment (AI / CGI / editing)</h2>
+  {% set au = final.authenticity or {} %}
+  <div class="grid4">
+    {% for key, name in [("authentic_capture","Authentic camera capture"),("digitally_edited","Digitally edited"),("cgi_or_composite","CGI / composite"),("ai_generated","AI-generated")] %}
+    {% set p = au[key] or {} %}
+    <div class="card">
+      <div class="brand">{{ name }}</div>
+      <div class="big" style="font-size:28px; margin-top:6px">{{ p.percent|pct }}</div>
+      <div class="bar"><div class="rng" style="left:{{ p.low or 0 }}%; width:{{ (p.high or 0) - (p.low or 0) }}%"></div><div class="pt" style="left:{{ p.percent or 0 }}%"></div></div>
+      <div class="range">range {{ p.low|pct }} &ndash; {{ p.high|pct }}</div>
+      {% if p.key_evidence %}<ul class="tight note">{% for e in p.key_evidence %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="card"><b>Reasoning.</b> {{ au.reasoning }}
+    <p class="note" style="margin:8px 0 0">These are not mutually exclusive (an authentic capture can also be edited), so they need not add to 100%.</p></div>
+
+  <!-- ===== Stills ===== -->
+  <h2>Stills examined</h2>
+  <p class="note">Every image the AI examined is shown below with its ID. Boxes and numbers are the AI's annotations. "Native" crops are 1:1 pixels from the original file; "overview" images are downscaled for context.</p>
+  <div class="gallery">
+    {% for im in images %}
+    <figure>
+      {% if im.src %}<img src="{{ im.src }}" alt="{{ im.id }}" loading="lazy">{% endif %}
+      <figcaption><b>{{ im.id }}</b> &mdash; {{ im.description }}
+        {% for a in ann_by_img.get(im.id, []) %}<div class="ann"><b>{{ loop.index }}. {{ a.label }}</b>: {{ a.note }}</div>{% endfor %}
+      </figcaption>
+    </figure>
+    {% endfor %}
+  </div>
+
+  <!-- ===== Observations ===== -->
+  <h2>Observations</h2>
+  {% for o in final.observations or [] %}
+  <div class="card"><h3 style="margin-top:0">{{ o.heading }}</h3><p style="margin:0">{{ o.detail }}</p>
+    {% if o.image_ids %}<p class="note" style="margin:6px 0 0">See: {{ o.image_ids|join(", ") }}</p>{% endif %}</div>
+  {% endfor %}
+  {% if final.media_overview %}<div class="card"><b>Media overview.</b> {{ final.media_overview }}</div>{% endif %}
+
+  <!-- ===== Explanations ===== -->
+  <h2>Possible explanations (ranked)</h2>
+  {% for e in final.explanations or [] %}
+  <div class="card explanation">
+    <div class="head"><h3 style="margin:0">{{ loop.index }}. {{ e.explanation }} <span class="tag">{{ e.category|label }}</span></h3><span class="pctv">{{ e.likelihood_percent|pct }}</span></div>
+    <div class="bar likely"><div class="fill" style="width:{{ e.likelihood_percent }}%"></div></div>
+    <div class="grid2">
+      <div><b class="pro">Supporting evidence</b><ul class="tight">{% for s in e.supporting_evidence %}<li>{{ s }}</li>{% else %}<li class="note">None noted</li>{% endfor %}</ul></div>
+      <div><b class="con">Contradicting evidence</b><ul class="tight">{% for s in e.contradicting_evidence %}<li>{{ s }}</li>{% else %}<li class="note">None noted</li>{% endfor %}</ul></div>
+    </div>
+    {% if e.how_to_confirm %}<p class="note" style="margin:6px 0 0"><b>How to confirm or rule out:</b> {{ e.how_to_confirm }}</p>{% endif %}
+  </div>
+  {% endfor %}
+
+  <h2>Witness account vs. the evidence</h2>
+  <div class="card">{{ final.witness_account_comparison }}</div>
+
+  <!-- ===== Metadata ===== -->
+  <h2>Metadata and file integrity</h2>
+  {% set ma = final.metadata_assessment or {} %}
+  <div class="card"><p style="margin-top:0">{{ ma.summary }}</p>
+    <table><tr><th>Item</th><th>Observation</th><th>Significance</th></tr>
+    {% for f in ma.findings or [] %}<tr><td>{{ f.item }}</td><td>{{ f.observation }}</td><td><span class="tag {{ f.significance }}">{{ f.significance|label }}</span></td></tr>{% endfor %}
+    </table>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3 style="margin-top:0">Key technical facts (from the file)</h3>
+      <table>{% for k, v in facts.items() %}<tr><td class="k">{{ k|label }}</td><td>{{ v }}</td></tr>{% endfor %}</table>
+      <p class="note">Metadata source: {{ case.metadata_source }}.</p>
+    </div>
+    <div class="card"><h3 style="margin-top:0">Automatic checks</h3>
+      <ul class="tight">{% for f in case.flags or [] %}<li><span class="tag {{ f.level }}">{{ f.level }}</span> {{ f.message }}</li>{% else %}<li class="note">No issues flagged.</li>{% endfor %}</ul>
+      <h3>Content Credentials (C2PA)</h3>
+      {% if case.c2pa and case.c2pa.present %}<pre>{{ json_dumps(case.c2pa) }}</pre>{% else %}<p class="note">No C2PA manifest found. (Most cameras and phones do not yet add one; social platforms usually strip them.)</p>{% endif %}
+      {% if case.jpeg %}<h3>JPEG structure</h3><table>{% for k, v in case.jpeg.items() %}<tr><td class="k">{{ k|label }}</td><td>{{ v }}</td></tr>{% endfor %}</table>{% endif %}
+    </div>
+  </div>
+
+  <!-- ===== Capture context ===== -->
+  <h2>Capture context provided by the user</h2>
+  <div class="card"><table>
+    {% for k, v in context.items() if v %}<tr><td class="k">{{ questions.get(k, k) }}</td><td style="white-space:pre-wrap">{{ v }}</td></tr>{% else %}<tr><td class="note">No context provided.</td></tr>{% endfor %}
+  </table>
+  <p class="note">The AI examined the media in a first, blind pass <b>without</b> the witness account (what was seen, duration, narrative), then compared the account with its findings in a second pass.</p></div>
+
+  <!-- ===== Preprocessing ===== -->
+  <h2>Measurements (automated preprocessing)</h2>
+  <p class="note">Visual maps (ELA, noise, spectrum, motion) appear with the stills above.</p>
+  {% set fx = pre.forensics or pre.forensics_key_frame or {} %}
+  <div class="grid2">
+    {% if fx.object_measurement %}<div class="card"><h3 style="margin-top:0">Object in the marked region</h3>
+      <table>{% for k, v in fx.object_measurement.items() %}<tr><td class="k">{{ k|label }}</td><td>{{ v }}</td></tr>{% endfor %}</table></div>{% endif %}
+    {% if fx.cell_comparison %}<div class="card"><h3 style="margin-top:0">Marked cells vs. rest of frame</h3>
+      <table><tr><th>Statistic</th><th>Frame median</th><th>Mean z</th><th>Max |z|</th></tr>
+      {% for k, v in fx.cell_comparison.summary.items() %}<tr><td>{{ k|label }}</td><td>{{ v.frame_median }}</td><td>{{ v.selected_mean_z }}</td><td>{{ v.selected_max_abs_z }}</td></tr>{% endfor %}</table>
+      <p class="note">Robust z-scores: how unusual the marked cells are compared with the whole frame. |z| &gt; 3 is notable, but a bright object on a dark sky will naturally differ.</p></div>{% endif %}
+    {% if fx.spectrum %}<div class="card"><h3 style="margin-top:0">Noise spectrum</h3><table>{% for k, v in fx.spectrum.items() %}<tr><td class="k">{{ k|label }}</td><td>{{ v }}</td></tr>{% endfor %}</table></div>{% endif %}
+    {% if fx.exposure %}<div class="card"><h3 style="margin-top:0">Exposure</h3><table>{% for k, v in fx.exposure.items() %}<tr><td class="k">{{ k|label }}</td><td>{{ v }}</td></tr>{% endfor %}</table></div>{% endif %}
+  </div>
+  {% if pre.motion and not pre.motion.error %}
+  <div class="grid2">
+    <div class="card"><h3 style="margin-top:0">Camera motion</h3><table>{% for k, v in pre.motion.camera_motion.items() %}<tr><td class="k">{{ k|label }}</td><td>{{ v }}</td></tr>{% endfor %}</table>
+      <h3>Frame timing &amp; integrity</h3><table>{% for k, v in pre.motion.timing.items() %}<tr><td class="k">{{ k|label }}</td><td>{{ v }}</td></tr>{% endfor %}
+      {% for k, v in pre.motion.noise_continuity.items() %}<tr><td class="k">{{ k|label }}</td><td>{{ v }}</td></tr>{% endfor %}</table></div>
+    {% if pre.motion.object_track %}<div class="card"><h3 style="margin-top:0">Object track</h3><table>
+      {% for k, v in pre.motion.object_track.items() if k != "samples" %}<tr><td class="k">{{ k|label }}</td><td>{{ v }}</td></tr>{% endfor %}</table></div>{% endif %}
+  </div>
+  {% elif pre.motion and pre.motion.error %}<div class="card note">Motion analysis unavailable: {{ pre.motion.error }}</div>{% endif %}
+
+  <!-- ===== Gaps / next steps ===== -->
+  <div class="grid2">
+    <div><h2>Limitations</h2><div class="card"><ul class="tight">{% for s in final.limitations or [] %}<li>{{ s }}</li>{% endfor %}</ul></div></div>
+    <div><h2>Recommended next steps</h2><div class="card"><ul class="tight">{% for s in final.recommended_next_steps or [] %}<li>{{ s }}</li>{% endfor %}</ul></div></div>
+  </div>
+  {% if final.questions_for_witness %}<h2>Questions for the witness</h2><div class="card"><ol class="tight">{% for s in final.questions_for_witness %}<li>{{ s }}</li>{% endfor %}</ol></div>{% endif %}
+
+  <!-- ===== Custody ===== -->
+  <h2>Chain of custody</h2>
+  <div class="card">
+    <table>
+      <tr><td class="k">Original file</td><td>{{ case.filename }} ({{ "{:,}".format(case.size_bytes) }} bytes)</td></tr>
+      <tr><td class="k">SHA-256</td><td style="font-family:monospace; word-break:break-all">{{ case.hashes.sha256 }}</td></tr>
+      <tr><td class="k">MD5</td><td style="font-family:monospace">{{ case.hashes.md5 }}</td></tr>
+      <tr><td class="k">Original unchanged since intake</td><td>{% if intact %}<span class="tag supports_authenticity">Yes - hash re-verified when this report was generated</span>{% else %}<span class="tag warning">NO - hash mismatch</span>{% endif %}</td></tr>
+    </table>
+    <details style="margin-top:10px"><summary>Activity log ({{ custody|length }} entries)</summary>
+      <table><tr><th>Time (UTC)</th><th>Action</th><th>Detail</th></tr>
+      {% for e in custody %}<tr><td style="white-space:nowrap">{{ e.time }}</td><td>{{ e.action }}</td><td style="word-break:break-word">{{ e.detail }}</td></tr>{% endfor %}</table>
+    </details>
+  </div>
+
+  <h2>Method</h2>
+  <div class="card note">
+    <p style="margin-top:0">1. The original was hashed at upload and stored read-only; all work used copies. 2. Metadata was read with {{ case.metadata_source }}{% if case.kind == "video" %} and ffprobe{% endif %}, checked for Content Credentials (C2PA) and for generator/editor fingerprints, and cross-checked for consistency. 3. The user marked the region of interest on a labelled grid{% if case.kind == "video" %} on frames pulled from the chosen time range{% endif %}. 4. Automated preprocessing produced full-resolution crops, enhanced and pixel-zoom views, error-level, noise and frequency maps, per-cell statistics{% if case.kind == "video" %}, camera-motion compensation, object tracking, blink-rate and frame-integrity measurements{% endif %}. 5. {{ result.model }} examined the media in a blind pass without the witness account, then a second pass compared the account with its findings and produced this report.</p>
+    {% if usage %}<p>AI usage: {% for u in usage %}pass {{ loop.index }}: {{ "{:,}".format(u.input_tokens) }} input / {{ "{:,}".format(u.output_tokens) }} output tokens{% if not loop.last %}; {% endif %}{% endfor %}{% if total_cost is not none %} &middot; estimated cost ${{ "%.2f"|format(total_cost) }}{% endif %}.</p>{% endif %}
+  </div>
+  <p class="disclaimer"><b>Important.</b> This report was produced by an AI-assisted tool. Its percentages are calibrated estimates of belief, not laboratory measurements, and AI/CGI detection from pixels alone is not definitive, particularly for compressed or re-shared media. It is not a certified forensic examination and should not be relied on as sole evidence for legal, safety, or financial decisions. Independent expert review is recommended where it matters.</p>
+</div>
+</body>
+</html>

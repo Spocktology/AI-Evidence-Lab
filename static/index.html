@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Evidence Lab</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="appbar">
+  <a class="logo" href="/" data-nav="home"><span class="dot"></span> AI Evidence Lab</a>
+  <span class="sub">AI-assisted photo &amp; video evaluation</span>
+  <span id="health" class="health"></span>
+</header>
+
+<main id="view"></main>
+
+<template id="tpl-home">
+  <section class="home">
+    <div class="panel upload-panel">
+      <h1>Evaluate a photo or video</h1>
+      <p class="muted">Upload the <b>original</b> file if you can (straight from the device that recorded it). The file is hashed and stored read-only; all analysis works on copies.</p>
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept="image/*,video/*,.heic,.heif,.dng,.mts,.m2ts,.mkv">
+        <span class="drop-icon">&#8679;</span>
+        <span class="drop-text">Drop a file here or click to choose</span>
+        <span class="muted small">JPEG, HEIC, PNG, TIFF, MP4, MOV and more</span>
+      </label>
+      <input type="text" id="case-title" placeholder="Case title (optional)">
+      <div id="upload-status" class="small muted"></div>
+    </div>
+    <div class="panel">
+      <h2>Previous cases</h2>
+      <div id="case-list" class="case-list"><p class="muted">Loading...</p></div>
+    </div>
+  </section>
+</template>
+
+<template id="tpl-case">
+  <section class="case">
+    <div class="case-head">
+      <div>
+        <div class="muted small" id="case-id"></div>
+        <h1 id="case-title-h"></h1>
+      </div>
+      <a class="btn ghost" href="/" data-nav="home">All cases</a>
+    </div>
+    <nav class="steps" id="steps">
+      <button data-step="metadata">1. Metadata</button>
+      <button data-step="context">2. Capture details</button>
+      <button data-step="mark">3. Mark the object</button>
+      <button data-step="analyze">4. AI analysis &amp; report</button>
+    </nav>
+    <div id="step-body"></div>
+  </section>
+</template>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

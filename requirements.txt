@@ -1,0 +1,11 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+anthropic>=2.10
+pillow>=10.4
+pillow-heif>=0.18
+numpy>=1.26
+opencv-python-headless>=4.10
+jinja2>=3.1
+c2pa-python>=0.39
+python-dotenv>=1.0
